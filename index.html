@@ -155,29 +155,56 @@
 
 <script>
 // ══════════════════════════════════════════
-//  FileBeam Phone Receiver — WebRTC Client
+//  FileBeam Phone Receiver — Firebase Signaling
 // ══════════════════════════════════════════
 
-// ⚠️ YAHAN APNA CLOUDFLARE URL DAALO
-// Format: wss://filebeam-signaling.YOUR-SUBDOMAIN.workers.dev/ws
-const SIGNALING_URL = 'https://filebeam-8ec51-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FIREBASE_URL = 'https://filebeam-8ec51-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-let ws = null;
 let pc = null;
 let dc = null;
 let roomCode = null;
+let pollTimer = null;
+let lastMsgCount = 0;
 
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' }
 ];
 
+// Firebase helpers
+async function fbGet(path) {
+  try {
+    const res = await fetch(`${FIREBASE_URL}/${path}.json`);
+    return await res.json();
+  } catch(e) { return null; }
+}
+async function fbSet(path, data) {
+  try {
+    await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+async function fbPush(path, data) {
+  try {
+    await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
 // ── Read code from URL if present ──────
 window.addEventListener('DOMContentLoaded', () => {
-  const path = window.location.pathname; // /connect/123456
-  const match = path.match(/\/connect\/(\d{6})/);
-  if (match) {
-    document.getElementById('codeInput').value = match[1];
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    document.getElementById('codeInput').value = code;
     connectWithCode();
   }
 });
@@ -195,45 +222,22 @@ async function connectWithCode() {
   if (!code || code.length !== 6) { showError('Enter the 6-digit code from the extension'); return; }
   roomCode = code;
 
-  // Get signaling URL — from config or URL param
-  let sigUrl = SIGNALING_URL;
-  const urlParam = new URLSearchParams(window.location.search).get('s');
-  if (urlParam) sigUrl = decodeURIComponent(urlParam);
-  if (!sigUrl || sigUrl.includes('__SIGNALING')) {
-    showError('Signaling server not configured. Contact support.'); return;
-  }
-
   document.getElementById('codeSection').style.opacity = '0.5';
 
-  ws = new WebSocket(`${sigUrl}?room=${code}&role=phone`);
+  // Check if room exists on Firebase
+  const room = await fbGet(`room/${code}`);
+  if (!room) {
+    showError('Room not found. Check code or make sure PC extension is running.');
+    document.getElementById('codeSection').style.opacity = '1';
+    return;
+  }
 
-  ws.onopen = () => {
-    console.log('Signaling connected');
-  };
-
-  ws.onmessage = async (event) => {
-    let msg;
-    try { msg = JSON.parse(event.data); } catch { return; }
-
-    if (msg.type === 'offer') {
-      await setupWebRTC(msg.sdp, code);
-    }
-
-    if (msg.type === 'ice') {
-      try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch(e) {}
-    }
-
-    if (msg.type === 'no_pc') {
-      showError('PC extension not found. Make sure the extension is running.');
-      document.getElementById('codeSection').style.opacity = '1';
-    }
-  };
-
-  ws.onerror = () => showError('Cannot reach server. Check your connection.');
+  // Setup WebRTC as phone (answerer)
+  await setupWebRTC(code);
 }
 
-// ── Setup WebRTC as phone (answerer) ───
-async function setupWebRTC(offerSdp, code) {
+// ── Setup WebRTC ───────────────────────
+async function setupWebRTC(code) {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
   pc.ondatachannel = (event) => {
@@ -242,9 +246,13 @@ async function setupWebRTC(offerSdp, code) {
     setupDataChannel(dc);
   };
 
-  pc.onicecandidate = (event) => {
-    if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'ice', candidate: event.candidate, room: code, from: 'phone' }));
+  pc.onicecandidate = async (event) => {
+    if (event.candidate) {
+      const ts = Date.now();
+      await fbSet(`room/${code}/phone_ice/${ts}`, {
+        candidate: event.candidate,
+        ts: ts
+      });
     }
   };
 
@@ -253,11 +261,46 @@ async function setupWebRTC(offerSdp, code) {
     if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') onDisconnected();
   };
 
-  await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
+  // Signal phone is ready
+  await fbSet(`room/${code}/phone_ready`, { ts: Date.now() });
 
-  ws.send(JSON.stringify({ type: 'answer', sdp: answer, room: code, from: 'phone' }));
+  // Poll for PC offer
+  let attempts = 0;
+  let lastPcIceTs = 0;
+  const waitForOffer = setInterval(async () => {
+    attempts++;
+    if (attempts > 30) {
+      clearInterval(waitForOffer);
+      showError('PC not responding. Make sure extension is open and running.');
+      document.getElementById('codeSection').style.opacity = '1';
+      return;
+    }
+
+    const offerData = await fbGet(`room/${code}/offer`);
+    if (offerData && offerData.sdp) {
+      clearInterval(waitForOffer);
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offerData.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await fbSet(`room/${code}/answer`, { sdp: answer, ts: Date.now() });
+
+      // Now poll for PC ICE candidates
+      const icePoller = setInterval(async () => {
+        const iceData = await fbGet(`room/${code}/pc_ice`);
+        if (iceData && typeof iceData === 'object') {
+          const candidates = Object.values(iceData);
+          for (const c of candidates) {
+            if (c.ts > lastPcIceTs && c.candidate) {
+              lastPcIceTs = c.ts;
+              try { await pc.addIceCandidate(new RTCIceCandidate(c.candidate)); } catch(e) {}
+            }
+          }
+        }
+        if (pc.connectionState === 'connected') clearInterval(icePoller);
+      }, 1000);
+    }
+  }, 1000);
 }
 
 function onConnected() {
