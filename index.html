@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>FileBeam — Connect to PC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>FileBeam — Send to PC</title>
 <style>
   :root {
     --bg:#0a0b10; --card:#13141c; --border:#1e2030;
@@ -12,66 +12,116 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+
   .glow1{position:fixed;top:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,0.15),transparent 70%);pointer-events:none}
   .glow2{position:fixed;bottom:-80px;right:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,170,0.1),transparent 70%);pointer-events:none}
-  .container{max-width:480px;margin:0 auto;padding:24px 16px 40px;position:relative;z-index:1}
 
-  .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-  .logo-box{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#4c5aff,#9650ff,#00d4aa);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .logo-text{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .logo-sub{font-size:0.7rem;color:var(--muted);margin-top:1px}
+  .container{max-width:480px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
 
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px}
-  .card-title{font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+  /* LOGO */
+  .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+  .logo-box{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4c5aff,#9650ff,#00d4aa);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .logo-text{font-size:1.15rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .logo-sub{font-size:0.68rem;color:var(--muted);margin-top:1px}
 
-  .code-input-row{display:flex;gap:8px}
-  .code-input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1.4rem;font-weight:700;padding:12px 14px;text-align:center;letter-spacing:.2em;outline:none;-webkit-appearance:none}
-  .code-input:focus{border-color:var(--accent)}
+  /* STATUS */
+  .status-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:0.82rem;font-weight:600;transition:all 0.3s}
+  .status-bar.connecting{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);color:#a5b4fc}
+  .status-bar.connected{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);color:#00d4aa}
+  .status-bar.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dot.pulse{background:var(--accent2);animation:pulse 1.2s ease-in-out infinite}
+  .dot.grey{background:var(--muted)}
+  .dot.red{background:#f87171}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
 
-  .btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s}
-  .btn-primary{background:linear-gradient(135deg,var(--accent),#8b5cf6);color:white;box-shadow:0 6px 20px rgba(108,99,255,.35)}
-  .btn-primary:active{transform:scale(.97);opacity:.9}
-  .btn-success{background:linear-gradient(135deg,#00d4aa,#00b89c);color:#001a15;margin-top:8px}
-  .btn-secondary{background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);margin-top:8px}
+  /* DRAG DROP ZONE */
+  .drop-zone{
+    background:var(--card);
+    border:2px dashed rgba(108,99,255,0.4);
+    border-radius:20px;
+    padding:36px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:all 0.25s;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .drop-zone.drag-over{
+    border-color:var(--accent);
+    background:rgba(108,99,255,0.08);
+    transform:scale(1.02);
+  }
+  .drop-zone.has-files{
+    border-color:var(--accent2);
+    background:rgba(0,212,170,0.06);
+  }
+  .drop-zone-icon{font-size:2.8rem;margin-bottom:10px;transition:transform 0.2s}
+  .drop-zone.drag-over .drop-zone-icon{transform:scale(1.15)}
+  .drop-zone-title{font-size:1rem;font-weight:700;margin-bottom:5px}
+  .drop-zone-sub{font-size:0.8rem;color:var(--muted);line-height:1.5}
+  .chosen-files{margin-top:10px;font-size:0.8rem;color:var(--accent2);font-weight:600;min-height:18px}
 
-  .status-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;text-align:center;display:none}
-  .status-card.show{display:block}
-  .status-icon{font-size:2.5rem;margin-bottom:8px}
-  .status-title{font-size:1rem;font-weight:700;margin-bottom:4px}
-  .status-sub{font-size:0.8rem;color:var(--muted)}
+  /* FILE LIST preview */
+  .file-preview{margin-top:10px;text-align:left}
+  .file-preview-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.78rem}
+  .file-preview-item:last-child{border-bottom:none}
+  .file-preview-name{flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-preview-size{color:var(--muted);flex-shrink:0}
 
-  .dot-live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:blink 1.2s ease-in-out infinite;margin-right:6px}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  /* SEND BUTTON */
+  .send-btn{
+    width:100%;padding:15px;border-radius:14px;border:none;
+    font-family:inherit;font-size:1rem;font-weight:700;
+    cursor:pointer;transition:all 0.2s;
+    background:linear-gradient(135deg,var(--accent),#8b5cf6);
+    color:white;box-shadow:0 6px 24px rgba(108,99,255,0.35);
+    margin-bottom:10px;
+  }
+  .send-btn:active{transform:scale(0.97);opacity:0.9}
+  .send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 
-  .upload-zone{background:var(--card);border:2px dashed var(--border);border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:14px;cursor:pointer;display:none}
-  .upload-zone.show{display:block}
-  .upload-zone.drag{border-color:var(--accent);background:rgba(108,99,255,.05)}
-  .upload-icon{font-size:2.5rem;margin-bottom:10px}
-  .upload-title{font-size:1rem;font-weight:700;margin-bottom:4px}
-  .upload-sub{font-size:.8rem;color:var(--muted);line-height:1.5}
-  .chosen-name{font-size:.8rem;color:var(--accent2);margin-top:8px;font-weight:500}
+  /* PROGRESS */
+  .progress-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
+  .progress-card.show{display:block}
+  .progress-label{font-size:0.82rem;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+  .progress-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;width:0%;transition:width 0.3s}
+  .progress-pct{font-size:0.78rem;color:var(--accent2);font-weight:700}
 
-  .progress-wrap{display:none;margin-top:14px}
-  .progress-bar{height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;width:0%;transition:width .3s}
-  .progress-text{font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px}
+  /* RESULT */
+  .result-card{display:none;border-radius:14px;padding:16px;text-align:center;margin-bottom:14px}
+  .result-card.success{background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25)}
+  .result-card.error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25)}
+  .result-icon{font-size:2rem;margin-bottom:6px}
+  .result-title{font-size:0.95rem;font-weight:700;margin-bottom:3px}
+  .result-sub{font-size:0.78rem;color:var(--muted)}
 
-  .result-box{display:none;background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);border-radius:12px;padding:14px;text-align:center;margin-top:14px}
-  .result-box.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
-  .result-icon{font-size:1.8rem;margin-bottom:6px}
-  .result-text{font-size:.85rem;font-weight:600}
-  .result-sub{font-size:.75rem;color:var(--muted);margin-top:3px}
-
-  .receive-list{margin-top:12px}
-  .receive-item{background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.15);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
-  .receive-name{font-size:.85rem;font-weight:600;flex:1}
-  .receive-size{font-size:.75rem;color:var(--muted)}
-
-  .text-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
-  .text-card.show{display:block}
-  textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:.9rem;padding:10px 12px;resize:vertical;min-height:80px;outline:none}
+  /* TEXT CARD */
+  .text-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+  .card-label{font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+  textarea{width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.9rem;padding:10px 12px;resize:none;min-height:80px;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
   textarea:focus{border-color:var(--accent)}
-  #fileInput{display:none}
+  .text-send-btn{width:100%;padding:11px;border-radius:10px;border:none;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--accent2);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;margin-top:8px;transition:all 0.2s}
+  .text-send-btn:active{opacity:0.8}
+
+  /* RECEIVED FROM PC */
+  .received-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
+  .received-card.show{display:block}
+  .recv-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .recv-item:last-child{border-bottom:none}
+  .recv-icon{font-size:1.4rem}
+  .recv-name{font-size:0.82rem;font-weight:600;flex:1}
+  .recv-size{font-size:0.72rem;color:var(--muted)}
+  .recv-dl-btn{background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--accent2);font-size:0.72rem;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap}
+
+  /* TEXT RECEIVED from PC */
+  .text-received-box{background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:12px;font-size:0.85rem;color:var(--text);line-height:1.6;word-break:break-all;margin-top:8px;display:none}
+
+  /* WIFI NOTE */
+  .wifi-note{text-align:center;font-size:0.75rem;color:var(--muted);padding:10px;line-height:1.5}
+
+  input[type=file]{display:none}
 </style>
 </head>
 <body>
@@ -91,87 +141,95 @@
     </div>
     <div>
       <div class="logo-text">FileBeam</div>
-      <div class="logo-sub">Phone ↔ PC Transfer</div>
+      <div class="logo-sub">Phone → PC Instant Transfer</div>
     </div>
   </div>
 
-  <!-- Enter Code -->
-  <div class="card" id="codeSection">
-    <div class="card-title">Enter Code from PC Extension</div>
-    <div class="code-input-row">
-      <input class="code-input" id="codeInput" type="number" maxlength="6" placeholder="123456">
-    </div>
-    <button class="btn btn-primary" style="margin-top:12px" onclick="connectWithCode()">Connect to PC</button>
-    <div id="codeError" style="color:#f87171;font-size:.8rem;margin-top:8px;display:none"></div>
+  <!-- Status bar -->
+  <div class="status-bar connecting" id="statusBar">
+    <div class="dot pulse" id="statusDot"></div>
+    <span id="statusText">Connecting to PC…</span>
   </div>
 
-  <!-- Connected status -->
-  <div class="status-card" id="connectedCard">
-    <div class="status-icon"><span class="dot-live"></span>🖥️</div>
-    <div class="status-title">Connected to PC!</div>
-    <div class="status-sub" id="connectedSub">Ready to transfer files</div>
-  </div>
-
-  <!-- Upload Zone (Phone → PC) -->
-  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-    <div class="upload-icon">📤</div>
-    <div class="upload-title">Tap to send file to PC</div>
-    <div class="upload-sub">Any file · No size limit*<br>Photos, videos, docs — anything</div>
-    <div class="chosen-name" id="chosenName"></div>
+  <!-- DRAG DROP ZONE (Phone → PC) -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="drop-zone-icon" id="dropIcon">📤</div>
+    <div class="drop-zone-title">Tap or drop files to send to PC</div>
+    <div class="drop-zone-sub">Photos · Videos · Docs · Any file<br>Any size — instantly saved to PC</div>
+    <div class="chosen-files" id="chosenFiles"></div>
+    <div class="file-preview" id="filePreview"></div>
   </div>
   <input type="file" id="fileInput" multiple>
 
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-text" id="progressText">Sending…</div>
+  <button class="send-btn" id="sendBtn" onclick="sendFiles()" disabled>
+    📤 Select files first
+  </button>
+
+  <!-- Progress -->
+  <div class="progress-card" id="progressCard">
+    <div class="progress-label">
+      <span id="progressLabel">Sending…</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
-  <div class="result-box" id="fileResult">
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
     <div class="result-icon" id="resultIcon">✅</div>
-    <div class="result-text" id="resultText">Sent!</div>
+    <div class="result-title" id="resultTitle">Sent!</div>
     <div class="result-sub" id="resultSub">File saved to PC → Downloads/FileBeam</div>
   </div>
 
-  <button class="btn btn-primary" id="sendFileBtn" style="display:none" onclick="sendFiles()">📤 Send to PC</button>
-
-  <!-- Text send -->
-  <div class="text-card" id="textCard">
-    <div class="card-title">Send Text / Link to PC</div>
-    <textarea id="textInput" placeholder="Type or paste a message, URL…"></textarea>
-    <button class="btn btn-secondary" onclick="sendText()" style="margin-top:8px">📋 Send Text to PC</button>
-    <div class="result-box" id="textResult" style="margin-top:8px">
-      <div class="result-icon">✅</div>
-      <div class="result-text">Text sent to PC!</div>
-    </div>
+  <!-- Text send (Phone → PC) -->
+  <div class="text-card">
+    <div class="card-label">📋 Send Text / Link to PC</div>
+    <textarea id="textInput" rows="3" placeholder="Type or paste text, URL, notes…"></textarea>
+    <button class="text-send-btn" onclick="sendText()">Send Text to PC →</button>
   </div>
 
   <!-- Files received FROM PC -->
-  <div id="receiveSection" style="display:none">
-    <div class="card-title" style="margin-top:8px">Files from PC</div>
-    <div class="receive-list" id="receiveList"></div>
+  <div class="received-card" id="receivedCard">
+    <div class="card-label">📥 Files from PC</div>
+    <div id="receivedList"></div>
   </div>
+
+  <!-- Text received FROM PC -->
+  <div class="text-card" id="textFromPcCard" style="display:none">
+    <div class="card-label">💬 Text from PC</div>
+    <div class="text-received-box" id="textFromPc"></div>
+    <button class="text-send-btn" onclick="copyTextFromPc()" style="margin-top:8px">📋 Copy</button>
+  </div>
+
+  <div class="wifi-note">⚡ Both devices must be on the <strong>same Wi-Fi</strong> for transfer to work</div>
 
 </div>
 
 <script>
-// ══════════════════════════════════════════
-//  FileBeam Phone Receiver — Firebase Signaling
-// ══════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  FileBeam receiver.html — Firebase WebRTC
+//  Phone → PC file/text send + PC → Phone receive
+// ══════════════════════════════════════════════════
 
 const FIREBASE_URL = 'https://filebeam-8ec51-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' }
+];
 
 let pc = null;
 let dc = null;
 let roomCode = null;
-let pollTimer = null;
-let lastMsgCount = 0;
+let selectedFiles = [];
 
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' }
-];
+// Receive state
+let recvBuffer = [];
+let recvMeta   = null;
+let recvBytes  = 0;
 
-// Firebase helpers
+// ── Firebase helpers ──────────────────────────────
 async function fbGet(path) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`);
@@ -181,116 +239,112 @@ async function fbGet(path) {
 async function fbSet(path, data) {
   try {
     await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return true;
-  } catch(e) { return false; }
-}
-async function fbPush(path, data) {
-  try {
-    await fetch(`${FIREBASE_URL}/${path}.json`, {
-      method: 'POST',
-      body: JSON.stringify(data),
+      method: 'PUT', body: JSON.stringify(data),
       headers: { 'Content-Type': 'application/json' }
     });
     return true;
   } catch(e) { return false; }
 }
 
-// ── Read code from URL if present ──────
+// ── Status helpers ────────────────────────────────
+function setStatus(text, type = 'connecting') {
+  const bar = document.getElementById('statusBar');
+  const dot  = document.getElementById('statusDot');
+  const txt  = document.getElementById('statusText');
+  bar.className = 'status-bar ' + type;
+  dot.className = 'dot ' + (type === 'connected' ? 'pulse' : type === 'error' ? 'red' : 'grey');
+  txt.textContent = text;
+}
+
+// ── Auto-read code from URL ?code=XXXXXX ──────────
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (code) {
-    document.getElementById('codeInput').value = code;
-    connectWithCode();
+  const code   = params.get('code');
+  if (code && code.length === 6) {
+    roomCode = code;
+    setStatus('Connecting to PC…', 'connecting');
+    connectToRoom(code);
+  } else {
+    setStatus('No session code found. Open from PC extension QR.', 'error');
   }
+
+  // Setup drag & drop
+  setupDragDrop();
+
+  // File input change
+  document.getElementById('fileInput').addEventListener('change', () => {
+    selectedFiles = Array.from(document.getElementById('fileInput').files);
+    updateFileUI();
+  });
 });
 
-function showError(msg) {
-  const el = document.getElementById('codeError');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4000);
-}
-
-// ── Connect with 6-digit code ──────────
-async function connectWithCode() {
-  const code = document.getElementById('codeInput').value.trim();
-  if (!code || code.length !== 6) { showError('Enter the 6-digit code from the extension'); return; }
-  roomCode = code;
-
-  document.getElementById('codeSection').style.opacity = '0.5';
-
-  // Check if room exists on Firebase
+// ── Connect to Firebase room ──────────────────────
+async function connectToRoom(code) {
+  // Check room exists
   const room = await fbGet(`room/${code}`);
   if (!room) {
-    showError('Room not found. Check code or make sure PC extension is running.');
-    document.getElementById('codeSection').style.opacity = '1';
+    setStatus('PC extension not running. Start session from extension.', 'error');
     return;
   }
 
-  // Setup WebRTC as phone (answerer)
   await setupWebRTC(code);
 }
 
-// ── Setup WebRTC ───────────────────────
+// ── WebRTC setup ──────────────────────────────────
 async function setupWebRTC(code) {
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
+  // Receive data channel from PC
   pc.ondatachannel = (event) => {
     dc = event.channel;
     dc.binaryType = 'arraybuffer';
     setupDataChannel(dc);
   };
 
+  // Send our ICE to Firebase
   pc.onicecandidate = async (event) => {
     if (event.candidate) {
       const ts = Date.now();
-      await fbSet(`room/${code}/phone_ice/${ts}`, {
-        candidate: event.candidate,
-        ts: ts
-      });
+      await fbSet(`room/${code}/phone_ice/${ts}`, { candidate: event.candidate, ts });
     }
   };
 
   pc.onconnectionstatechange = () => {
-    if (pc.connectionState === 'connected') onConnected();
-    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') onDisconnected();
+    const state = pc.connectionState;
+    if (state === 'connected')    onConnected();
+    if (state === 'disconnected') setStatus('PC disconnected. Refresh to reconnect.', 'error');
+    if (state === 'failed')       setStatus('Connection failed. Try again.', 'error');
   };
 
-  // Signal phone is ready
+  // Tell PC we are here
   await fbSet(`room/${code}/phone_ready`, { ts: Date.now() });
 
-  // Poll for PC offer
+  // Wait for PC offer
   let attempts = 0;
   let lastPcIceTs = 0;
-  const waitForOffer = setInterval(async () => {
+
+  const waitOffer = setInterval(async () => {
     attempts++;
-    if (attempts > 30) {
-      clearInterval(waitForOffer);
-      showError('PC not responding. Make sure extension is open and running.');
-      document.getElementById('codeSection').style.opacity = '1';
+    if (attempts > 40) {
+      clearInterval(waitOffer);
+      setStatus('PC not responding. Make sure extension session is active.', 'error');
       return;
     }
 
     const offerData = await fbGet(`room/${code}/offer`);
     if (offerData && offerData.sdp) {
-      clearInterval(waitForOffer);
+      clearInterval(waitOffer);
 
       await pc.setRemoteDescription(new RTCSessionDescription(offerData.sdp));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await fbSet(`room/${code}/answer`, { sdp: answer, ts: Date.now() });
 
-      // Now poll for PC ICE candidates
+      // Poll PC ICE candidates
       const icePoller = setInterval(async () => {
         const iceData = await fbGet(`room/${code}/pc_ice`);
         if (iceData && typeof iceData === 'object') {
-          const candidates = Object.values(iceData);
-          for (const c of candidates) {
+          for (const c of Object.values(iceData)) {
             if (c.ts > lastPcIceTs && c.candidate) {
               lastPcIceTs = c.ts;
               try { await pc.addIceCandidate(new RTCIceCandidate(c.candidate)); } catch(e) {}
@@ -298,113 +352,108 @@ async function setupWebRTC(code) {
           }
         }
         if (pc.connectionState === 'connected') clearInterval(icePoller);
-      }, 1000);
+      }, 800);
     }
-  }, 1000);
+  }, 800);
 }
 
+// ── Connected! ────────────────────────────────────
 function onConnected() {
-  document.getElementById('codeSection').style.display = 'none';
-  document.getElementById('connectedCard').classList.add('show');
-  document.getElementById('uploadZone').classList.add('show');
-  document.getElementById('sendFileBtn').style.display = 'block';
-  document.getElementById('textCard').classList.add('show');
-  document.getElementById('receiveSection').style.display = 'block';
+  setStatus('✅ Connected to PC — ready to send!', 'connected');
+  document.getElementById('sendBtn').disabled = false;
+  if (selectedFiles.length === 0) {
+    document.getElementById('sendBtn').textContent = '📤 Tap drop zone to select files';
+  }
 }
 
-function onDisconnected() {
-  document.getElementById('connectedCard').querySelector('.status-title').textContent = 'Disconnected';
-  document.getElementById('connectedCard').querySelector('.status-sub').textContent = 'Refresh to reconnect';
-}
-
-// ── Data channel ───────────────────────
-let sendBuffer = [];
-let sendMeta   = null;
-let recvBuffer = [];
-let recvMeta   = null;
-let recvBytes  = 0;
-
+// ── Data channel ──────────────────────────────────
 function setupDataChannel(channel) {
-  channel.onopen = () => { console.log('DC open'); onConnected(); };
-  channel.onmessage = (e) => handleIncoming(e.data);
+  channel.onopen = () => {
+    console.log('DC open');
+    onConnected();
+  };
+  channel.onmessage = (e) => handleFromPC(e.data);
   channel.onerror   = (e) => console.error('DC error', e);
 }
 
-function handleIncoming(data) {
+// ── Handle data from PC ───────────────────────────
+function handleFromPC(data) {
   if (typeof data === 'string') {
     let msg; try { msg = JSON.parse(data); } catch { return; }
 
     if (msg.type === 'file_start') {
-      recvMeta  = { name: msg.name, size: msg.size, mimeType: msg.mimeType };
+      recvMeta   = { name: msg.name, size: msg.size, mimeType: msg.mimeType };
       recvBuffer = [];
       recvBytes  = 0;
+      showProgress(msg.name, 0);
     }
-    if (msg.type === 'file_end') saveReceivedFile();
-    if (msg.type === 'text') showReceivedText(msg.text);
+    if (msg.type === 'file_end') saveFileFromPC();
+    if (msg.type === 'text')     showTextFromPC(msg.text);
     return;
   }
 
+  // Binary chunk from PC
   if (data instanceof ArrayBuffer) {
     recvBuffer.push(data);
     recvBytes += data.byteLength;
     if (recvMeta) {
       const pct = Math.round((recvBytes / recvMeta.size) * 100);
-      document.getElementById('progressFill').style.width = pct + '%';
-      document.getElementById('progressText').textContent = `Receiving ${recvMeta.name} — ${pct}%`;
-      document.getElementById('progressWrap').style.display = 'block';
+      showProgress(recvMeta.name, pct);
     }
   }
 }
 
-function saveReceivedFile() {
+function saveFileFromPC() {
   if (!recvMeta) return;
   const blob = new Blob(recvBuffer, { type: recvMeta.mimeType || 'application/octet-stream' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href     = url;
-  a.download = recvMeta.name;
-  a.click();
+  a.href = url; a.download = recvMeta.name; a.click();
   URL.revokeObjectURL(url);
 
-  // Add to list
-  const list = document.getElementById('receiveList');
+  // Add to received list
+  const list = document.getElementById('receivedList');
   const item = document.createElement('div');
-  item.className = 'receive-item';
-  item.innerHTML = `<span style="font-size:1.2rem">📥</span><div><div class="receive-name">${recvMeta.name}</div><div class="receive-size">${formatBytes(recvMeta.size)}</div></div>`;
+  item.className = 'recv-item';
+  item.innerHTML = `
+    <span class="recv-icon">${fileEmoji(recvMeta.name)}</span>
+    <span class="recv-name">${recvMeta.name}</span>
+    <span class="recv-size">${formatSize(recvMeta.size)}</span>`;
   list.prepend(item);
+  document.getElementById('receivedCard').classList.add('show');
 
-  document.getElementById('progressWrap').style.display = 'none';
+  hideProgress();
   recvBuffer = []; recvMeta = null; recvBytes = 0;
 }
 
-function showReceivedText(text) {
-  const t = document.getElementById('textInput');
-  if (t) t.value = text;
+function showTextFromPC(text) {
+  const box  = document.getElementById('textFromPc');
+  const card = document.getElementById('textFromPcCard');
+  if (box)  { box.textContent = text; box.style.display = 'block'; }
+  if (card) card.style.display = 'block';
+  document.getElementById('textInput').value = text; // Also put in textarea
 }
 
-// ── Send files to PC ───────────────────
-let selectedFiles = [];
+function copyTextFromPc() {
+  const box = document.getElementById('textFromPc');
+  if (box) navigator.clipboard.writeText(box.textContent);
+}
 
-document.getElementById('fileInput').addEventListener('change', () => {
-  selectedFiles = Array.from(document.getElementById('fileInput').files);
-  if (selectedFiles.length > 0) {
-    document.getElementById('chosenName').textContent = selectedFiles.length === 1
-      ? selectedFiles[0].name : `${selectedFiles.length} files selected`;
-  }
-});
-
+// ── Send files Phone → PC ─────────────────────────
 async function sendFiles() {
-  if (selectedFiles.length === 0) { document.getElementById('fileInput').click(); return; }
-  if (!dc || dc.readyState !== 'open') { alert('Not connected to PC'); return; }
+  if (!selectedFiles.length) {
+    document.getElementById('fileInput').click();
+    return;
+  }
 
+  if (!dc || dc.readyState !== 'open') {
+    setStatus('Not connected to PC yet. Wait a moment…', 'error');
+    return;
+  }
+
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('resultCard').style.display = 'none';
   const CHUNK = 64 * 1024;
-  const progressFill = document.getElementById('progressFill');
-  const progressText = document.getElementById('progressText');
-  const progressWrap = document.getElementById('progressWrap');
-  const fileResult   = document.getElementById('fileResult');
-
-  progressWrap.style.display = 'block';
-  fileResult.style.display = 'none';
 
   for (let i = 0; i < selectedFiles.length; i++) {
     const file = selectedFiles[i];
@@ -414,46 +463,164 @@ async function sendFiles() {
 
     let offset = 0;
     while (offset < buf.byteLength) {
-      while (dc.bufferedAmount > 16 * 1024 * 1024) await new Promise(r => setTimeout(r, 50));
+      while (dc.bufferedAmount > 16 * 1024 * 1024) {
+        await new Promise(r => setTimeout(r, 50));
+      }
       const chunk = buf.slice(offset, offset + CHUNK);
       dc.send(chunk);
       offset += chunk.byteLength;
-      const pct = Math.round(((i + offset/buf.byteLength) / selectedFiles.length) * 100);
-      progressFill.style.width = pct + '%';
-      progressText.textContent = `${file.name} — ${Math.round(offset/buf.byteLength*100)}%`;
+
+      const pct = Math.round(((i + offset / buf.byteLength) / selectedFiles.length) * 100);
+      showProgress(file.name, pct);
     }
 
     dc.send(JSON.stringify({ type: 'file_end', name: file.name }));
   }
 
-  progressFill.style.width = '100%';
-  setTimeout(() => {
-    progressWrap.style.display = 'none';
-    fileResult.style.display = 'block';
-    document.getElementById('resultText').textContent = selectedFiles.length === 1
-      ? `${selectedFiles[0].name} sent!` : `${selectedFiles.length} files sent!`;
-    document.getElementById('resultSub').textContent = 'Saved to PC → Downloads/FileBeam';
-    selectedFiles = [];
-    document.getElementById('chosenName').textContent = '';
-    document.getElementById('fileInput').value = '';
-  }, 400);
+  // Done
+  hideProgress();
+  showResult('success', '✅', 
+    selectedFiles.length === 1 ? `${selectedFiles[0].name} sent!` : `${selectedFiles.length} files sent!`,
+    'Saved to PC → Downloads/FileBeam'
+  );
+
+  // Reset
+  selectedFiles = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('chosenFiles').textContent = '';
+  document.getElementById('filePreview').innerHTML = '';
+  document.getElementById('dropZone').classList.remove('has-files');
+  document.getElementById('dropIcon').textContent = '📤';
+  document.getElementById('sendBtn').textContent = '📤 Select files to send';
+  document.getElementById('sendBtn').disabled = false;
 }
 
-async function sendText() {
+// ── Send text Phone → PC ──────────────────────────
+function sendText() {
   const text = document.getElementById('textInput').value.trim();
-  if (!text || !dc || dc.readyState !== 'open') return;
+  if (!text) return;
+  if (!dc || dc.readyState !== 'open') {
+    setStatus('Not connected to PC.', 'error');
+    return;
+  }
   dc.send(JSON.stringify({ type: 'text', text }));
-  document.getElementById('textResult').style.display = 'block';
   document.getElementById('textInput').value = '';
-  setTimeout(() => document.getElementById('textResult').style.display = 'none', 3000);
+  showResult('success', '📋', 'Text sent to PC!', 'Appears in PC extension instantly');
+  setTimeout(() => document.getElementById('resultCard').style.display = 'none', 3000);
 }
 
-function formatBytes(b) {
-  if (!b) return '';
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
-  return (b/1073741824).toFixed(1) + ' GB';
+// ── Progress / Result UI ──────────────────────────
+function showProgress(name, pct) {
+  const card = document.getElementById('progressCard');
+  card.classList.add('show');
+  document.getElementById('progressLabel').textContent = `${name}`;
+  document.getElementById('progressPct').textContent   = pct + '%';
+  document.getElementById('progressFill').style.width  = pct + '%';
+}
+
+function hideProgress() {
+  document.getElementById('progressCard').classList.remove('show');
+}
+
+function showResult(type, icon, title, sub) {
+  const card = document.getElementById('resultCard');
+  card.className = 'result-card ' + type;
+  card.style.display = 'block';
+  document.getElementById('resultIcon').textContent  = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent   = sub;
+}
+
+// ── File UI ───────────────────────────────────────
+function updateFileUI() {
+  const files   = selectedFiles;
+  const zone    = document.getElementById('dropZone');
+  const chosen  = document.getElementById('chosenFiles');
+  const preview = document.getElementById('filePreview');
+  const btn     = document.getElementById('sendBtn');
+  const icon    = document.getElementById('dropIcon');
+
+  if (!files.length) return;
+  zone.classList.add('has-files');
+  icon.textContent = '✅';
+
+  chosen.textContent = files.length === 1
+    ? files[0].name
+    : `${files.length} files selected`;
+
+  // File preview list
+  preview.innerHTML = '';
+  files.slice(0, 5).forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-preview-item';
+    div.innerHTML = `
+      <span>${fileEmoji(f.name)}</span>
+      <span class="file-preview-name">${f.name}</span>
+      <span class="file-preview-size">${formatSize(f.size)}</span>`;
+    preview.appendChild(div);
+  });
+  if (files.length > 5) {
+    const more = document.createElement('div');
+    more.style.cssText = 'font-size:0.72rem;color:var(--muted);padding:4px 0;';
+    more.textContent = `+${files.length - 5} more files`;
+    preview.appendChild(more);
+  }
+
+  btn.textContent = files.length === 1
+    ? `📤 Send "${files[0].name}" to PC`
+    : `📤 Send ${files.length} files to PC`;
+  btn.disabled = (dc?.readyState !== 'open');
+}
+
+// ── Drag & Drop ───────────────────────────────────
+function setupDragDrop() {
+  const zone  = document.getElementById('dropZone');
+  const input = document.getElementById('fileInput');
+
+  ['dragenter','dragover'].forEach(ev => {
+    zone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+  });
+  ['dragleave','dragend'].forEach(ev => {
+    zone.addEventListener(ev, () => zone.classList.remove('drag-over'));
+  });
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length) {
+      selectedFiles = files;
+      // Also push to input
+      const dt = new DataTransfer();
+      files.forEach(f => dt.items.add(f));
+      input.files = dt.files;
+      updateFileUI();
+    }
+  });
+}
+
+// ── Helpers ───────────────────────────────────────
+function fileEmoji(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp','heic','avif'].includes(ext)) return '🖼️';
+  if (['mp4','mov','mkv','avi','webm','m4v'].includes(ext))          return '🎬';
+  if (['mp3','aac','wav','flac','ogg','m4a'].includes(ext))          return '🎵';
+  if (['pdf'].includes(ext))                                          return '📄';
+  if (['zip','rar','7z','tar','gz'].includes(ext))                   return '🗜️';
+  if (['doc','docx','txt','md','rtf'].includes(ext))                 return '📝';
+  if (['xls','xlsx','csv'].includes(ext))                            return '📊';
+  if (['apk','ipa'].includes(ext))                                   return '📱';
+  return '📁';
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024)        return bytes + ' B';
+  if (bytes < 1048576)     return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824)  return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(1) + ' GB';
 }
 </script>
 </body>
