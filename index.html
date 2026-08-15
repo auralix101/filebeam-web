@@ -85,7 +85,7 @@
   .text-btn:active{opacity:0.75}
 
   /* Received from PC section */
-  .recv-section{display:none}
+  .recv-section{display:block}
   .recv-section.show{display:block}
   .recv-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
   .recv-item:last-child{border-bottom:none}
@@ -274,13 +274,19 @@ async function connectToRoom(code) {
 function startPolling(code) {
   if (pollTimer) clearInterval(pollTimer);
 
+  let processedIds = new Set();
+
   pollTimer = setInterval(async () => {
     const transfers = await fbGet(`sessions/${code}/from_pc`);
     if (!transfers) return;
 
     for (const [id, meta] of Object.entries(transfers)) {
-      if (meta.status === 'complete' && meta.ts > lastChecked - 5000) {
-        lastChecked = Date.now();
+      // Skip already processed transfers
+      if (processedIds.has(id)) continue;
+      
+      if (meta && meta.status === 'complete') {
+        processedIds.add(id);
+        console.log('📥 Detected file from PC:', id, meta.name || 'text');
         await receiveFromPC(code, id, meta);
       }
     }
@@ -292,32 +298,52 @@ async function receiveFromPC(code, id, meta) {
   if (meta.type === 'text') {
     showRecvSection();
     const textBox = document.getElementById('recvTextBox');
-    document.getElementById('recvTextContent').textContent = meta.text;
+    document.getElementById('recvTextContent').textContent = meta.text || '';
     textBox.style.display = 'block';
     receivedTexts.push(meta.text);
     await fbDelete(`sessions/${code}/from_pc/${id}`);
+    showToast('✅ Text received from PC!');
     return;
   }
 
   // File
+  console.log('📥 Receiving file:', meta.name, 'chunks:', meta.chunks);
   const totalChunks = meta.chunks;
   let allData = '';
 
   for (let i = 0; i < totalChunks; i++) {
     const chunk = await fbGet(`sessions/${code}/from_pc/${id}/chunk_${i}`);
-    if (!chunk) return;
+    if (!chunk) {
+      console.log('❌ Missing chunk', i);
+      showToast('❌ Failed to download ' + meta.name);
+      return;
+    }
     allData += chunk.data;
   }
 
-  // Create download
+  // Store file data for later download
   const dataUrl = `data:${meta.mimeType || 'application/octet-stream'};base64,${allData}`;
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = meta.name;
-  a.click();
+  const fileObj = {
+    name: meta.name,
+    size: meta.size,
+    url: dataUrl,
+    mimeType: meta.mimeType,
+    ts: new Date().toISOString()
+  };
 
   showRecvSection();
-  addRecvFile({ name: meta.name, size: meta.size, url: dataUrl });
+  addRecvFile(fileObj);
+  showToast('✅ ' + meta.name + ' received!');
+  
+  // Auto-download on PC, but not on mobile
+  if (window.innerWidth > 768) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = meta.name;
+    a.click();
+  }
+
+  // Clean up from Firebase
   await fbDelete(`sessions/${code}/from_pc/${id}`);
 }
 
@@ -328,17 +354,54 @@ function showRecvSection() {
 function addRecvFile(file) {
   receivedFiles.push(file);
   const list = document.getElementById('recvFileList');
+  
+  // Remove empty state if exists
+  const emptyState = list.querySelector('[data-empty]');
+  if (emptyState) emptyState.remove();
+  
   const div = document.createElement('div');
   div.className = 'recv-item';
+  
+  // Create unique ID for this button
+  const btnId = 'recv-btn-' + Date.now();
+  
   div.innerHTML = `
     <div class="recv-icon">${fileEmoji(file.name)}</div>
     <div class="recv-info">
       <div class="recv-name">${escHtml(file.name)}</div>
       <div class="recv-size">${fmtSize(file.size)}</div>
     </div>
-    <button class="recv-dl" onclick="window.open('${file.url}')">⬇ Save</button>
+    <button class="recv-dl" id="${btnId}">⬇ Save</button>
   `;
   list.appendChild(div);
+
+  // Attach click handler properly
+  document.getElementById(btnId).addEventListener('click', (e) => {
+    e.preventDefault();
+    downloadFile(file);
+  });
+}
+
+// Initialize empty state on load
+window.addEventListener('DOMContentLoaded', () => {
+  const list = document.getElementById('recvFileList');
+  if (list && list.innerHTML === '') {
+    const emptyDiv = document.createElement('div');
+    emptyDiv.setAttribute('data-empty', 'true');
+    emptyDiv.style.cssText = 'padding:16px;text-align:center;color:var(--muted);font-size:0.85rem;';
+    emptyDiv.innerHTML = '📭 No files received yet<br>Files from PC will appear here';
+    list.appendChild(emptyDiv);
+  }
+});
+
+function downloadFile(file) {
+  const a = document.createElement('a');
+  a.href = file.url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  console.log('Downloaded:', file.name);
 }
 
 window.copyRecvText = function() {
