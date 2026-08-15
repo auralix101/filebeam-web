@@ -225,6 +225,15 @@ async function fbDelete(path) {
     return true;
   } catch(e) { return false; }
 }
+async function fbPatch(path, data) {
+  try {
+    await fetch(`${FIREBASE_URL}/${path}.json`, {
+      method: 'PATCH', body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return true;
+  } catch(e) { return false; }
+}
 
 // ── Status helpers ────────────────────────
 function setStatus(text, type) {
@@ -255,10 +264,19 @@ window.addEventListener('DOMContentLoaded', () => {
 async function connectToRoom(code) {
   setStatus('Connecting to PC…', 'connecting');
 
-  // Check room exists
-  const room = await fbGet(`sessions/${code}`);
+  // Retry up to 10 times with 2s delay (handles race where phone opens before session starts)
+  let room = null;
+  for (let i = 0; i < 10; i++) {
+    room = await fbGet(`sessions/${code}`);
+    if (room) break;
+    await new Promise(r => setTimeout(r, 2000));
+    setStatus(`Connecting to PC… (${i + 2}/10)`, 'connecting');
+  }
+
   if (!room) {
-    setStatus('PC session not found. Start session from extension.', 'error');
+    setStatus('❌ PC session not found. Start session from extension, then refresh.', 'error');
+    // Keep retrying silently every 5s
+    setTimeout(() => connectToRoom(code), 5000);
     return;
   }
 
@@ -266,7 +284,6 @@ async function connectToRoom(code) {
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('sendBtn').textContent = 'Tap drop zone to select files';
 
-  // Start polling for files from PC
   startPolling(code);
 }
 
@@ -487,8 +504,11 @@ async function sendFiles() {
           showProgress(file.name, pct);
         }
 
-        // Mark complete
-        await fbSet(`sessions/${roomCode}/from_phone/${transferId}/status`, 'complete');
+        // Mark complete using PATCH — keeps chunks intact, only updates status field
+        // (PUT would wipe chunks before background.js can read them!)
+        await fbPatch(`sessions/${roomCode}/from_phone/${transferId}`, {
+          status: 'complete'
+        });
         resolve();
       };
       reader.onerror = reject;
