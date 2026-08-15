@@ -6,120 +6,101 @@
 <title>FileBeam — Send to PC</title>
 <style>
   :root {
-    --bg:#0a0b10; --card:#13141c; --border:#1e2030;
-    --accent:#6c63ff; --accent2:#00d4aa;
-    --text:#eceef4; --muted:#8b8fa3;
+    --bg:#0c0d14; --card:#13141f; --card2:#1a1b28;
+    --border:#252638; --accent:#7c6dfa; --accent2:#00d9a3;
+    --text:#e8eaf2; --muted:#7b7e96;
+    --danger:#f06060; --success:#00d9a3;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
 
-  .glow1{position:fixed;top:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,0.15),transparent 70%);pointer-events:none}
-  .glow2{position:fixed;bottom:-80px;right:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,170,0.1),transparent 70%);pointer-events:none}
+  /* Glows */
+  .glow1{position:fixed;top:-120px;left:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(124,109,250,0.12),transparent 70%);pointer-events:none;z-index:0}
+  .glow2{position:fixed;bottom:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(0,217,163,0.09),transparent 70%);pointer-events:none;z-index:0}
 
-  .container{max-width:480px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
+  .container{max-width:480px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1}
 
-  /* LOGO */
-  .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
-  .logo-box{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4c5aff,#9650ff,#00d4aa);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .logo-text{font-size:1.15rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .logo-sub{font-size:0.68rem;color:var(--muted);margin-top:1px}
+  /* Logo */
+  .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .logo-box{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#5a4fff,#9650ff,#00d9a3);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(124,109,250,0.3)}
+  .logo-name{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.3px}
+  .logo-sub{font-size:0.7rem;color:var(--muted);margin-top:2px}
 
-  /* STATUS */
-  .status-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:0.82rem;font-weight:600;transition:all 0.3s}
-  .status-bar.connecting{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);color:#a5b4fc}
-  .status-bar.connected{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);color:#00d4aa}
-  .status-bar.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171}
-  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .dot.pulse{background:var(--accent2);animation:pulse 1.2s ease-in-out infinite}
-  .dot.grey{background:var(--muted)}
-  .dot.red{background:#f87171}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+  /* Status */
+  .status-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:12px;margin-bottom:16px;font-size:0.82rem;font-weight:600;transition:all 0.3s;border:1px solid transparent}
+  .status-bar.connecting{background:rgba(124,109,250,0.08);border-color:rgba(124,109,250,0.2);color:#a5b4fc}
+  .status-bar.connected{background:rgba(0,217,163,0.08);border-color:rgba(0,217,163,0.25);color:var(--success)}
+  .status-bar.error{background:rgba(240,96,96,0.08);border-color:rgba(240,96,96,0.25);color:var(--danger)}
+  .sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--muted)}
+  .sdot.pulse{background:var(--success);animation:pulse 1.3s ease-in-out infinite}
+  .sdot.spin{background:var(--accent);animation:pulse 0.8s ease-in-out infinite}
+  .sdot.red{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.8)}}
 
-  /* DRAG DROP ZONE */
-  .drop-zone{
-    background:var(--card);
-    border:2px dashed rgba(108,99,255,0.4);
-    border-radius:20px;
-    padding:36px 20px;
-    text-align:center;
-    cursor:pointer;
-    transition:all 0.25s;
-    margin-bottom:14px;
-    position:relative;
-  }
-  .drop-zone.drag-over{
-    border-color:var(--accent);
-    background:rgba(108,99,255,0.08);
-    transform:scale(1.02);
-  }
-  .drop-zone.has-files{
-    border-color:var(--accent2);
-    background:rgba(0,212,170,0.06);
-  }
-  .drop-zone-icon{font-size:2.8rem;margin-bottom:10px;transition:transform 0.2s}
-  .drop-zone.drag-over .drop-zone-icon{transform:scale(1.15)}
-  .drop-zone-title{font-size:1rem;font-weight:700;margin-bottom:5px}
-  .drop-zone-sub{font-size:0.8rem;color:var(--muted);line-height:1.5}
+  /* Card */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+  .card-label{font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+
+  /* Drop zone */
+  .drop-zone{background:var(--card2);border:2px dashed rgba(124,109,250,0.35);border-radius:14px;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.25s;margin-bottom:12px;position:relative;-webkit-user-select:none;user-select:none}
+  .drop-zone.drag-over{border-color:var(--accent);background:rgba(124,109,250,0.08);transform:scale(1.02)}
+  .drop-zone.has-files{border-color:var(--accent2);background:rgba(0,217,163,0.05)}
+  .drop-icon{font-size:2.8rem;margin-bottom:10px;line-height:1;transition:transform 0.2s}
+  .drop-zone.drag-over .drop-icon{transform:scale(1.15)}
+  .drop-title{font-size:1rem;font-weight:700;margin-bottom:5px}
+  .drop-sub{font-size:0.8rem;color:var(--muted);line-height:1.6}
   .chosen-files{margin-top:10px;font-size:0.8rem;color:var(--accent2);font-weight:600;min-height:18px}
 
-  /* FILE LIST preview */
-  .file-preview{margin-top:10px;text-align:left}
-  .file-preview-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.78rem}
-  .file-preview-item:last-child{border-bottom:none}
-  .file-preview-name{flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .file-preview-size{color:var(--muted);flex-shrink:0}
+  /* File preview list */
+  .file-list{margin-top:10px;text-align:left}
+  .file-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.78rem}
+  .file-item:last-child{border-bottom:none}
+  .file-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-size{color:var(--muted);flex-shrink:0}
 
-  /* SEND BUTTON */
-  .send-btn{
-    width:100%;padding:15px;border-radius:14px;border:none;
-    font-family:inherit;font-size:1rem;font-weight:700;
-    cursor:pointer;transition:all 0.2s;
-    background:linear-gradient(135deg,var(--accent),#8b5cf6);
-    color:white;box-shadow:0 6px 24px rgba(108,99,255,0.35);
-    margin-bottom:10px;
-  }
+  /* Send button */
+  .send-btn{width:100%;padding:15px;border-radius:13px;border:none;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;background:linear-gradient(135deg,var(--accent),#9650ff);color:#fff;box-shadow:0 6px 22px rgba(124,109,250,0.35);margin-bottom:10px;-webkit-tap-highlight-color:transparent}
   .send-btn:active{transform:scale(0.97);opacity:0.9}
-  .send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+  .send-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none}
 
-  /* PROGRESS */
-  .progress-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
+  /* Progress */
+  .progress-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;display:none}
   .progress-card.show{display:block}
-  .progress-label{font-size:0.82rem;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
-  .progress-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+  .progress-label{display:flex;justify-content:space-between;font-size:0.8rem;color:var(--muted);margin-bottom:8px}
+  .progress-track{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
   .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;width:0%;transition:width 0.3s}
-  .progress-pct{font-size:0.78rem;color:var(--accent2);font-weight:700}
 
-  /* RESULT */
-  .result-card{display:none;border-radius:14px;padding:16px;text-align:center;margin-bottom:14px}
-  .result-card.success{background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25)}
-  .result-card.error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25)}
-  .result-icon{font-size:2rem;margin-bottom:6px}
+  /* Result */
+  .result-card{display:none;border-radius:13px;padding:16px;text-align:center;margin-bottom:14px}
+  .result-card.success{background:rgba(0,217,163,0.07);border:1px solid rgba(0,217,163,0.25)}
+  .result-card.error{background:rgba(240,96,96,0.07);border:1px solid rgba(240,96,96,0.25)}
+  .result-icon{font-size:2.2rem;margin-bottom:6px}
   .result-title{font-size:0.95rem;font-weight:700;margin-bottom:3px}
   .result-sub{font-size:0.78rem;color:var(--muted)}
 
-  /* TEXT CARD */
-  .text-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
-  .card-label{font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+  /* Text input */
   textarea{width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.9rem;padding:10px 12px;resize:none;min-height:80px;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
   textarea:focus{border-color:var(--accent)}
-  .text-send-btn{width:100%;padding:11px;border-radius:10px;border:none;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--accent2);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;margin-top:8px;transition:all 0.2s}
-  .text-send-btn:active{opacity:0.8}
+  .text-btn{width:100%;padding:12px;border-radius:11px;border:1px solid rgba(0,217,163,0.3);background:rgba(0,217,163,0.1);color:var(--accent2);font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:10px;transition:all 0.2s;-webkit-tap-highlight-color:transparent}
+  .text-btn:active{opacity:0.75}
 
-  /* RECEIVED FROM PC */
-  .received-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
-  .received-card.show{display:block}
-  .recv-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+  /* Received from PC section */
+  .recv-section{display:none}
+  .recv-section.show{display:block}
+  .recv-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
   .recv-item:last-child{border-bottom:none}
-  .recv-icon{font-size:1.4rem}
-  .recv-name{font-size:0.82rem;font-weight:600;flex:1}
+  .recv-icon{font-size:1.5rem;flex-shrink:0}
+  .recv-info{flex:1;overflow:hidden}
+  .recv-name{font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .recv-size{font-size:0.72rem;color:var(--muted)}
-  .recv-dl-btn{background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--accent2);font-size:0.72rem;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap}
+  .recv-dl{background:rgba(0,217,163,0.12);border:1px solid rgba(0,217,163,0.25);color:var(--accent2);font-size:0.72rem;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:inherit}
 
-  /* TEXT RECEIVED from PC */
-  .text-received-box{background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:12px;font-size:0.85rem;color:var(--text);line-height:1.6;word-break:break-all;margin-top:8px;display:none}
+  /* Text received */
+  .text-recv{background:rgba(124,109,250,0.07);border:1px solid rgba(124,109,250,0.2);border-radius:10px;padding:12px;font-size:0.88rem;color:var(--text);line-height:1.6;word-break:break-all;margin-top:10px;display:none}
+  .text-copy-btn{background:transparent;border:none;color:var(--accent);font-size:0.78rem;font-weight:600;cursor:pointer;margin-top:6px;font-family:inherit}
 
-  /* WIFI NOTE */
-  .wifi-note{text-align:center;font-size:0.75rem;color:var(--muted);padding:10px;line-height:1.5}
+  .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+  .wifi-note{text-align:center;font-size:0.72rem;color:var(--muted);padding:10px 16px;line-height:1.6}
 
   input[type=file]{display:none}
 </style>
@@ -133,106 +114,99 @@
   <div class="logo-row">
     <div class="logo-box">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-        <rect x="2" y="14" width="7" height="8" rx="1.5" fill="#fff" opacity=".9"/>
-        <rect x="15" y="2" width="7" height="8" rx="1.5" fill="#fff" opacity=".9"/>
-        <path d="M9 18h3M15 6H12M12 18l6-12" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>
+        <rect x="2" y="13" width="7" height="9" rx="1.5" fill="#fff" opacity=".9"/>
+        <rect x="15" y="2" width="7" height="9" rx="1.5" fill="#fff" opacity=".9"/>
+        <path d="M9 17.5h3M15 6.5h-3M12 17.5L18 6.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
         <circle cx="12" cy="12" r="1.5" fill="#fff"/>
       </svg>
     </div>
     <div>
-      <div class="logo-text">FileBeam</div>
-      <div class="logo-sub">Phone → PC Instant Transfer</div>
+      <div class="logo-name">FileBeam</div>
+      <div class="logo-sub">Phone ↔ PC Instant Transfer</div>
     </div>
   </div>
 
-  <!-- Status bar -->
+  <!-- Status -->
   <div class="status-bar connecting" id="statusBar">
-    <div class="dot pulse" id="statusDot"></div>
+    <div class="sdot spin" id="statusDot"></div>
     <span id="statusText">Connecting to PC…</span>
   </div>
 
-  <!-- DRAG DROP ZONE (Phone → PC) -->
-  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-    <div class="drop-zone-icon" id="dropIcon">📤</div>
-    <div class="drop-zone-title">Tap or drop files to send to PC</div>
-    <div class="drop-zone-sub">Photos · Videos · Docs · Any file<br>Any size — instantly saved to PC</div>
-    <div class="chosen-files" id="chosenFiles"></div>
-    <div class="file-preview" id="filePreview"></div>
-  </div>
-  <input type="file" id="fileInput" multiple>
+  <!-- Send Files to PC -->
+  <div class="card">
+    <div class="card-label">📤 Send to PC</div>
 
-  <button class="send-btn" id="sendBtn" onclick="sendFiles()" disabled>
-    📤 Select files first
-  </button>
-
-  <!-- Progress -->
-  <div class="progress-card" id="progressCard">
-    <div class="progress-label">
-      <span id="progressLabel">Sending…</span>
-      <span class="progress-pct" id="progressPct">0%</span>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📁</div>
+      <div class="drop-title">Tap to select files</div>
+      <div class="drop-sub">Photos · Videos · Docs · Any file<br>Instantly saved to your PC</div>
+      <div class="chosen-files" id="chosenFiles"></div>
+      <div class="file-list" id="fileList"></div>
     </div>
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <input type="file" id="fileInput" multiple>
+
+    <div class="progress-card" id="progressCard">
+      <div class="progress-label">
+        <span id="progName">Uploading…</span>
+        <span id="progPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-icon" id="resultIcon"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+
+    <button class="send-btn" id="sendBtn" disabled>Select files to send</button>
   </div>
 
-  <!-- Result -->
-  <div class="result-card" id="resultCard">
-    <div class="result-icon" id="resultIcon">✅</div>
-    <div class="result-title" id="resultTitle">Sent!</div>
-    <div class="result-sub" id="resultSub">File saved to PC → Downloads/FileBeam</div>
+  <!-- Send Text to PC -->
+  <div class="card">
+    <div class="card-label">✏️ Send Text / Link to PC</div>
+    <textarea id="textInput" placeholder="Type or paste text, URL, anything…" rows="3"></textarea>
+    <button class="text-btn" id="sendTextBtn">Send Text to PC →</button>
   </div>
 
-  <!-- Text send (Phone → PC) -->
-  <div class="text-card">
-    <div class="card-label">📋 Send Text / Link to PC</div>
-    <textarea id="textInput" rows="3" placeholder="Type or paste text, URL, notes…"></textarea>
-    <button class="text-send-btn" onclick="sendText()">Send Text to PC →</button>
+  <!-- Received from PC -->
+  <div class="card recv-section" id="recvSection">
+    <div class="card-label">📥 Received from PC</div>
+
+    <div id="recvTextBox" class="text-recv">
+      <span id="recvTextContent"></span>
+      <br>
+      <button class="text-copy-btn" onclick="copyRecvText()">📋 Copy text</button>
+    </div>
+
+    <div id="recvFileList"></div>
   </div>
 
-  <!-- Files received FROM PC -->
-  <div class="received-card" id="receivedCard">
-    <div class="card-label">📥 Files from PC</div>
-    <div id="receivedList"></div>
-  </div>
-
-  <!-- Text received FROM PC -->
-  <div class="text-card" id="textFromPcCard" style="display:none">
-    <div class="card-label">💬 Text from PC</div>
-    <div class="text-received-box" id="textFromPc"></div>
-    <button class="text-send-btn" onclick="copyTextFromPc()" style="margin-top:8px">📋 Copy</button>
-  </div>
-
-  <div class="wifi-note">⚡ Both devices must be on the <strong>same Wi-Fi</strong> for transfer to work</div>
-
+  <div class="wifi-note">⚡ Works on any network — WiFi, mobile data, anywhere</div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════════
-//  FileBeam receiver.html — Firebase WebRTC
-//  Phone → PC file/text send + PC → Phone receive
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════
+//  FileBeam receiver.html
+//  Firebase Direct Transfer — No WebRTC
+// ══════════════════════════════════════════
 
 const FIREBASE_URL = 'https://filebeam-8ec51-default-rtdb.asia-southeast1.firebasedatabase.app';
+const CHUNK_SIZE   = 30000;
+const POLL_MS      = 1500;
 
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' }
-];
-
-let pc = null;
-let dc = null;
-let roomCode = null;
+let roomCode     = null;
 let selectedFiles = [];
+let pollTimer    = null;
+let lastChecked  = 0;
+let receivedTexts = [];
+let receivedFiles = [];
 
-// Receive state
-let recvBuffer = [];
-let recvMeta   = null;
-let recvBytes  = 0;
-
-// ── Firebase helpers ──────────────────────────────
+// ── Firebase helpers ──────────────────────
 async function fbGet(path) {
   try {
     const res = await fetch(`${FIREBASE_URL}/${path}.json`);
+    if (!res.ok) return null;
     return await res.json();
   } catch(e) { return null; }
 }
@@ -245,382 +219,302 @@ async function fbSet(path, data) {
     return true;
   } catch(e) { return false; }
 }
+async function fbDelete(path) {
+  try {
+    await fetch(`${FIREBASE_URL}/${path}.json`, { method: 'DELETE' });
+    return true;
+  } catch(e) { return false; }
+}
 
-// ── Status helpers ────────────────────────────────
-function setStatus(text, type = 'connecting') {
+// ── Status helpers ────────────────────────
+function setStatus(text, type) {
   const bar = document.getElementById('statusBar');
-  const dot  = document.getElementById('statusDot');
-  const txt  = document.getElementById('statusText');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
   bar.className = 'status-bar ' + type;
-  dot.className = 'dot ' + (type === 'connected' ? 'pulse' : type === 'error' ? 'red' : 'grey');
+  dot.className = 'sdot ' + (type === 'connected' ? 'pulse' : type === 'error' ? 'red' : 'spin');
   txt.textContent = text;
 }
 
-// ── Auto-read code from URL ?code=XXXXXX ──────────
+// ── Init from URL ─────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (code && code.length === 6) {
-    roomCode = code;
-    setStatus('Connecting to PC…', 'connecting');
-    connectToRoom(code);
-  } else {
-    setStatus('No session code found. Open from PC extension QR.', 'error');
+  const code = params.get('code');
+
+  if (!code || code.length !== 6) {
+    setStatus('No code found. Scan QR from PC extension.', 'error');
+    return;
   }
 
-  // Setup drag & drop
-  setupDragDrop();
-
-  // File input change
-  document.getElementById('fileInput').addEventListener('change', () => {
-    selectedFiles = Array.from(document.getElementById('fileInput').files);
-    updateFileUI();
-  });
+  roomCode = code;
+  lastChecked = Date.now();
+  connectToRoom(code);
+  setupUI();
 });
 
-// ── Connect to Firebase room ──────────────────────
 async function connectToRoom(code) {
+  setStatus('Connecting to PC…', 'connecting');
+
   // Check room exists
-  const room = await fbGet(`room/${code}`);
+  const room = await fbGet(`sessions/${code}`);
   if (!room) {
-    setStatus('PC extension not running. Start session from extension.', 'error');
+    setStatus('PC session not found. Start session from extension.', 'error');
     return;
   }
 
-  await setupWebRTC(code);
-}
-
-// ── WebRTC setup ──────────────────────────────────
-async function setupWebRTC(code) {
-  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-
-  // Receive data channel from PC
-  pc.ondatachannel = (event) => {
-    dc = event.channel;
-    dc.binaryType = 'arraybuffer';
-    setupDataChannel(dc);
-  };
-
-  // Send our ICE to Firebase
-  pc.onicecandidate = async (event) => {
-    if (event.candidate) {
-      const ts = Date.now();
-      await fbSet(`room/${code}/phone_ice/${ts}`, { candidate: event.candidate, ts });
-    }
-  };
-
-  pc.onconnectionstatechange = () => {
-    const state = pc.connectionState;
-    if (state === 'connected')    onConnected();
-    if (state === 'disconnected') setStatus('PC disconnected. Refresh to reconnect.', 'error');
-    if (state === 'failed')       setStatus('Connection failed. Try again.', 'error');
-  };
-
-  // Tell PC we are here
-  await fbSet(`room/${code}/phone_ready`, { ts: Date.now() });
-
-  // Wait for PC offer
-  let attempts = 0;
-  let lastPcIceTs = 0;
-
-  const waitOffer = setInterval(async () => {
-    attempts++;
-    if (attempts > 40) {
-      clearInterval(waitOffer);
-      setStatus('PC not responding. Make sure extension session is active.', 'error');
-      return;
-    }
-
-    const offerData = await fbGet(`room/${code}/offer`);
-    if (offerData && offerData.sdp) {
-      clearInterval(waitOffer);
-
-      await pc.setRemoteDescription(new RTCSessionDescription(offerData.sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await fbSet(`room/${code}/answer`, { sdp: answer, ts: Date.now() });
-
-      // Poll PC ICE candidates
-      const icePoller = setInterval(async () => {
-        const iceData = await fbGet(`room/${code}/pc_ice`);
-        if (iceData && typeof iceData === 'object') {
-          for (const c of Object.values(iceData)) {
-            if (c.ts > lastPcIceTs && c.candidate) {
-              lastPcIceTs = c.ts;
-              try { await pc.addIceCandidate(new RTCIceCandidate(c.candidate)); } catch(e) {}
-            }
-          }
-        }
-        if (pc.connectionState === 'connected') clearInterval(icePoller);
-      }, 800);
-    }
-  }, 800);
-}
-
-// ── Connected! ────────────────────────────────────
-function onConnected() {
   setStatus('✅ Connected to PC — ready to send!', 'connected');
   document.getElementById('sendBtn').disabled = false;
-  if (selectedFiles.length === 0) {
-    document.getElementById('sendBtn').textContent = '📤 Tap drop zone to select files';
-  }
+  document.getElementById('sendBtn').textContent = 'Tap drop zone to select files';
+
+  // Start polling for files from PC
+  startPolling(code);
 }
 
-// ── Data channel ──────────────────────────────────
-function setupDataChannel(channel) {
-  channel.onopen = () => {
-    console.log('DC open');
-    onConnected();
-  };
-  channel.onmessage = (e) => handleFromPC(e.data);
-  channel.onerror   = (e) => console.error('DC error', e);
-}
+// ── Poll for files from PC ────────────────
+function startPolling(code) {
+  if (pollTimer) clearInterval(pollTimer);
 
-// ── Handle data from PC ───────────────────────────
-function handleFromPC(data) {
-  if (typeof data === 'string') {
-    let msg; try { msg = JSON.parse(data); } catch { return; }
+  pollTimer = setInterval(async () => {
+    const transfers = await fbGet(`sessions/${code}/from_pc`);
+    if (!transfers) return;
 
-    if (msg.type === 'file_start') {
-      recvMeta   = { name: msg.name, size: msg.size, mimeType: msg.mimeType };
-      recvBuffer = [];
-      recvBytes  = 0;
-      showProgress(msg.name, 0);
+    for (const [id, meta] of Object.entries(transfers)) {
+      if (meta.status === 'complete' && meta.ts > lastChecked - 5000) {
+        lastChecked = Date.now();
+        await receiveFromPC(code, id, meta);
+      }
     }
-    if (msg.type === 'file_end') saveFileFromPC();
-    if (msg.type === 'text')     showTextFromPC(msg.text);
+  }, POLL_MS);
+}
+
+// ── Receive file/text from PC ─────────────
+async function receiveFromPC(code, id, meta) {
+  if (meta.type === 'text') {
+    showRecvSection();
+    const textBox = document.getElementById('recvTextBox');
+    document.getElementById('recvTextContent').textContent = meta.text;
+    textBox.style.display = 'block';
+    receivedTexts.push(meta.text);
+    await fbDelete(`sessions/${code}/from_pc/${id}`);
     return;
   }
 
-  // Binary chunk from PC
-  if (data instanceof ArrayBuffer) {
-    recvBuffer.push(data);
-    recvBytes += data.byteLength;
-    if (recvMeta) {
-      const pct = Math.round((recvBytes / recvMeta.size) * 100);
-      showProgress(recvMeta.name, pct);
-    }
+  // File
+  const totalChunks = meta.chunks;
+  let allData = '';
+
+  for (let i = 0; i < totalChunks; i++) {
+    const chunk = await fbGet(`sessions/${code}/from_pc/${id}/chunk_${i}`);
+    if (!chunk) return;
+    allData += chunk.data;
   }
+
+  // Create download
+  const dataUrl = `data:${meta.mimeType || 'application/octet-stream'};base64,${allData}`;
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = meta.name;
+  a.click();
+
+  showRecvSection();
+  addRecvFile({ name: meta.name, size: meta.size, url: dataUrl });
+  await fbDelete(`sessions/${code}/from_pc/${id}`);
 }
 
-function saveFileFromPC() {
-  if (!recvMeta) return;
-  const blob = new Blob(recvBuffer, { type: recvMeta.mimeType || 'application/octet-stream' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = recvMeta.name; a.click();
-  URL.revokeObjectURL(url);
-
-  // Add to received list
-  const list = document.getElementById('receivedList');
-  const item = document.createElement('div');
-  item.className = 'recv-item';
-  item.innerHTML = `
-    <span class="recv-icon">${fileEmoji(recvMeta.name)}</span>
-    <span class="recv-name">${recvMeta.name}</span>
-    <span class="recv-size">${formatSize(recvMeta.size)}</span>`;
-  list.prepend(item);
-  document.getElementById('receivedCard').classList.add('show');
-
-  hideProgress();
-  recvBuffer = []; recvMeta = null; recvBytes = 0;
+function showRecvSection() {
+  document.getElementById('recvSection').classList.add('show');
 }
 
-function showTextFromPC(text) {
-  const box  = document.getElementById('textFromPc');
-  const card = document.getElementById('textFromPcCard');
-  if (box)  { box.textContent = text; box.style.display = 'block'; }
-  if (card) card.style.display = 'block';
-  document.getElementById('textInput').value = text; // Also put in textarea
+function addRecvFile(file) {
+  receivedFiles.push(file);
+  const list = document.getElementById('recvFileList');
+  const div = document.createElement('div');
+  div.className = 'recv-item';
+  div.innerHTML = `
+    <div class="recv-icon">${fileEmoji(file.name)}</div>
+    <div class="recv-info">
+      <div class="recv-name">${escHtml(file.name)}</div>
+      <div class="recv-size">${fmtSize(file.size)}</div>
+    </div>
+    <button class="recv-dl" onclick="window.open('${file.url}')">⬇ Save</button>
+  `;
+  list.appendChild(div);
 }
 
-function copyTextFromPc() {
-  const box = document.getElementById('textFromPc');
-  if (box) navigator.clipboard.writeText(box.textContent);
+window.copyRecvText = function() {
+  const text = document.getElementById('recvTextContent').textContent;
+  navigator.clipboard.writeText(text).catch(() => {});
+};
+
+// ── File select / drop ────────────────────
+function setupUI() {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    handleFiles(Array.from(e.dataTransfer.files));
+  });
+
+  fileInput.addEventListener('change', () => {
+    handleFiles(Array.from(fileInput.files));
+  });
+
+  document.getElementById('sendBtn').addEventListener('click', sendFiles);
+  document.getElementById('sendTextBtn').addEventListener('click', sendText);
 }
 
-// ── Send files Phone → PC ─────────────────────────
+function handleFiles(files) {
+  if (!files.length) return;
+  selectedFiles = files;
+  const dropZone = document.getElementById('dropZone');
+  dropZone.classList.add('has-files');
+  document.getElementById('chosenFiles').textContent =
+    files.length === 1 ? `${files[0].name} (${fmtSize(files[0].size)})` : `${files.length} files selected`;
+
+  const list = document.getElementById('fileList');
+  list.innerHTML = files.slice(0, 5).map(f =>
+    `<div class="file-item"><span class="file-name">${fileEmoji(f.name)} ${escHtml(f.name)}</span><span class="file-size">${fmtSize(f.size)}</span></div>`
+  ).join('');
+  if (files.length > 5) list.innerHTML += `<div class="file-item" style="color:var(--muted)">+${files.length-5} more</div>`;
+
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = `📤 Send ${files.length > 1 ? files.length + ' files' : '1 file'} to PC`;
+}
+
+// ── Send files to PC (via Firebase) ──────
 async function sendFiles() {
-  if (!selectedFiles.length) {
-    document.getElementById('fileInput').click();
-    return;
-  }
-
-  if (!dc || dc.readyState !== 'open') {
-    setStatus('Not connected to PC yet. Wait a moment…', 'error');
-    return;
-  }
+  if (!selectedFiles.length || !roomCode) return;
 
   document.getElementById('sendBtn').disabled = true;
-  document.getElementById('resultCard').style.display = 'none';
-  const CHUNK = 64 * 1024;
+  const result = document.getElementById('resultCard');
+  result.style.display = 'none';
 
-  for (let i = 0; i < selectedFiles.length; i++) {
-    const file = selectedFiles[i];
-    const buf  = await file.arrayBuffer();
+  for (let fi = 0; fi < selectedFiles.length; fi++) {
+    const file = selectedFiles[fi];
 
-    dc.send(JSON.stringify({ type: 'file_start', name: file.name, size: file.size, mimeType: file.type }));
+    await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result.split(',')[1];
+        const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
+        const transferId = 'ph_' + Date.now();
 
-    let offset = 0;
-    while (offset < buf.byteLength) {
-      while (dc.bufferedAmount > 16 * 1024 * 1024) {
-        await new Promise(r => setTimeout(r, 50));
-      }
-      const chunk = buf.slice(offset, offset + CHUNK);
-      dc.send(chunk);
-      offset += chunk.byteLength;
+        // Write metadata
+        await fbSet(`sessions/${roomCode}/from_phone/${transferId}`, {
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: file.size,
+          chunks: totalChunks,
+          status: 'uploading',
+          ts: Date.now()
+        });
 
-      const pct = Math.round(((i + offset / buf.byteLength) / selectedFiles.length) * 100);
-      showProgress(file.name, pct);
-    }
+        // Upload chunks
+        showProgress(file.name, 0);
+        for (let i = 0; i < totalChunks; i++) {
+          const chunk = base64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          await fbSet(`sessions/${roomCode}/from_phone/${transferId}/chunk_${i}`, { data: chunk });
+          const pct = Math.round(((i + 1) / totalChunks) * 100);
+          showProgress(file.name, pct);
+        }
 
-    dc.send(JSON.stringify({ type: 'file_end', name: file.name }));
+        // Mark complete
+        await fbSet(`sessions/${roomCode}/from_phone/${transferId}/status`, 'complete');
+        resolve();
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   // Done
   hideProgress();
-  showResult('success', '✅', 
-    selectedFiles.length === 1 ? `${selectedFiles[0].name} sent!` : `${selectedFiles.length} files sent!`,
-    'Saved to PC → Downloads/FileBeam'
-  );
-
-  // Reset
+  showResult('success', '✅', 'Sent to PC!', `${selectedFiles.length > 1 ? selectedFiles.length + ' files' : selectedFiles[0].name} saved to PC`);
   selectedFiles = [];
-  document.getElementById('fileInput').value = '';
   document.getElementById('chosenFiles').textContent = '';
-  document.getElementById('filePreview').innerHTML = '';
+  document.getElementById('fileList').innerHTML = '';
   document.getElementById('dropZone').classList.remove('has-files');
-  document.getElementById('dropIcon').textContent = '📤';
-  document.getElementById('sendBtn').textContent = '📤 Select files to send';
   document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = 'Select files to send';
 }
 
-// ── Send text Phone → PC ──────────────────────────
-function sendText() {
+// ── Send text to PC ───────────────────────
+async function sendText() {
   const text = document.getElementById('textInput').value.trim();
-  if (!text) return;
-  if (!dc || dc.readyState !== 'open') {
-    setStatus('Not connected to PC.', 'error');
-    return;
-  }
-  dc.send(JSON.stringify({ type: 'text', text }));
+  if (!text || !roomCode) return;
+
+  document.getElementById('sendTextBtn').disabled = true;
+
+  const transferId = 'ph_txt_' + Date.now();
+  await fbSet(`sessions/${roomCode}/from_phone/${transferId}`, {
+    type: 'text',
+    text: text,
+    status: 'complete',
+    ts: Date.now()
+  });
+
   document.getElementById('textInput').value = '';
-  showResult('success', '📋', 'Text sent to PC!', 'Appears in PC extension instantly');
-  setTimeout(() => document.getElementById('resultCard').style.display = 'none', 3000);
+  document.getElementById('sendTextBtn').disabled = false;
+  showToast('✅ Text sent to PC!');
 }
 
-// ── Progress / Result UI ──────────────────────────
+// ── Progress / result helpers ─────────────
 function showProgress(name, pct) {
   const card = document.getElementById('progressCard');
   card.classList.add('show');
-  document.getElementById('progressLabel').textContent = `${name}`;
-  document.getElementById('progressPct').textContent   = pct + '%';
-  document.getElementById('progressFill').style.width  = pct + '%';
+  document.getElementById('progName').textContent = name.length > 28 ? name.slice(0,28)+'…' : name;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
 }
-
 function hideProgress() {
   document.getElementById('progressCard').classList.remove('show');
 }
-
 function showResult(type, icon, title, sub) {
   const card = document.getElementById('resultCard');
   card.className = 'result-card ' + type;
   card.style.display = 'block';
-  document.getElementById('resultIcon').textContent  = icon;
+  document.getElementById('resultIcon').textContent = icon;
   document.getElementById('resultTitle').textContent = title;
-  document.getElementById('resultSub').textContent   = sub;
+  document.getElementById('resultSub').textContent = sub;
+  setTimeout(() => { card.style.display = 'none'; }, 4000);
+}
+function showToast(msg) {
+  // Simple alert for mobile
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1b28;border:1px solid #252638;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:#e8eaf2;z-index:999;white-space:nowrap';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2500);
 }
 
-// ── File UI ───────────────────────────────────────
-function updateFileUI() {
-  const files   = selectedFiles;
-  const zone    = document.getElementById('dropZone');
-  const chosen  = document.getElementById('chosenFiles');
-  const preview = document.getElementById('filePreview');
-  const btn     = document.getElementById('sendBtn');
-  const icon    = document.getElementById('dropIcon');
-
-  if (!files.length) return;
-  zone.classList.add('has-files');
-  icon.textContent = '✅';
-
-  chosen.textContent = files.length === 1
-    ? files[0].name
-    : `${files.length} files selected`;
-
-  // File preview list
-  preview.innerHTML = '';
-  files.slice(0, 5).forEach(f => {
-    const div = document.createElement('div');
-    div.className = 'file-preview-item';
-    div.innerHTML = `
-      <span>${fileEmoji(f.name)}</span>
-      <span class="file-preview-name">${f.name}</span>
-      <span class="file-preview-size">${formatSize(f.size)}</span>`;
-    preview.appendChild(div);
-  });
-  if (files.length > 5) {
-    const more = document.createElement('div');
-    more.style.cssText = 'font-size:0.72rem;color:var(--muted);padding:4px 0;';
-    more.textContent = `+${files.length - 5} more files`;
-    preview.appendChild(more);
-  }
-
-  btn.textContent = files.length === 1
-    ? `📤 Send "${files[0].name}" to PC`
-    : `📤 Send ${files.length} files to PC`;
-  btn.disabled = (dc?.readyState !== 'open');
+// ── Formatters ────────────────────────────
+function fmtSize(b) {
+  if (!b) return '';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(1) + ' GB';
 }
-
-// ── Drag & Drop ───────────────────────────────────
-function setupDragDrop() {
-  const zone  = document.getElementById('dropZone');
-  const input = document.getElementById('fileInput');
-
-  ['dragenter','dragover'].forEach(ev => {
-    zone.addEventListener(ev, (e) => {
-      e.preventDefault();
-      zone.classList.add('drag-over');
-    });
-  });
-  ['dragleave','dragend'].forEach(ev => {
-    zone.addEventListener(ev, () => zone.classList.remove('drag-over'));
-  });
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.classList.remove('drag-over');
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length) {
-      selectedFiles = files;
-      // Also push to input
-      const dt = new DataTransfer();
-      files.forEach(f => dt.items.add(f));
-      input.files = dt.files;
-      updateFileUI();
-    }
-  });
-}
-
-// ── Helpers ───────────────────────────────────────
 function fileEmoji(name) {
-  const ext = (name || '').split('.').pop().toLowerCase();
-  if (['jpg','jpeg','png','gif','webp','heic','avif'].includes(ext)) return '🖼️';
-  if (['mp4','mov','mkv','avi','webm','m4v'].includes(ext))          return '🎬';
-  if (['mp3','aac','wav','flac','ogg','m4a'].includes(ext))          return '🎵';
-  if (['pdf'].includes(ext))                                          return '📄';
-  if (['zip','rar','7z','tar','gz'].includes(ext))                   return '🗜️';
-  if (['doc','docx','txt','md','rtf'].includes(ext))                 return '📝';
-  if (['xls','xlsx','csv'].includes(ext))                            return '📊';
-  if (['apk','ipa'].includes(ext))                                   return '📱';
+  if (!name) return '📄';
+  const ext = name.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp','heic'].includes(ext)) return '🖼️';
+  if (['mp4','mov','mkv','avi','webm'].includes(ext)) return '🎬';
+  if (['mp3','aac','wav','flac','ogg'].includes(ext)) return '🎵';
+  if (['pdf'].includes(ext)) return '📄';
+  if (['zip','rar','7z'].includes(ext)) return '🗜️';
+  if (['doc','docx','txt'].includes(ext)) return '📝';
+  if (['xls','xlsx','csv'].includes(ext)) return '📊';
   return '📁';
 }
-
-function formatSize(bytes) {
-  if (!bytes) return '';
-  if (bytes < 1024)        return bytes + ' B';
-  if (bytes < 1048576)     return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1073741824)  return (bytes / 1048576).toFixed(1) + ' MB';
-  return (bytes / 1073741824).toFixed(1) + ' GB';
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>
