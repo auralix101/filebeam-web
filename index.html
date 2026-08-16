@@ -192,9 +192,8 @@
 // ══════════════════════════════════════════
 
 const FIREBASE_URL = 'https://filebeam-8ec51-default-rtdb.asia-southeast1.firebasedatabase.app';
-const CHUNK_SIZE   = 500000; // must match background.js
-const POLL_MS      = 500;    // near-instant polling
-const BATCH_SIZE   = 6;      // parallel chunk downloads
+const CHUNK_SIZE   = 30000;
+const POLL_MS      = 1500;
 
 let roomCode     = null;
 let selectedFiles = [];
@@ -324,37 +323,20 @@ async function receiveFromPC(code, id, meta) {
     return;
   }
 
-  // File — parallel download with retry
+  // File
   console.log('📥 Receiving file:', meta.name, 'chunks:', meta.chunks);
   const totalChunks = meta.chunks;
-  const chunkArray  = new Array(totalChunks);
+  let allData = '';
 
-  async function fetchChunkWithRetry(index, retries = 5) {
-    for (let attempt = 0; attempt < retries; attempt++) {
-      const chunk = await fbGet(`sessions/${code}/from_pc/${id}/chunk_${index}`);
-      if (chunk && chunk.data) return chunk.data;
-      await new Promise(r => setTimeout(r, 600 * (attempt + 1))); // backoff
+  for (let i = 0; i < totalChunks; i++) {
+    const chunk = await fbGet(`sessions/${code}/from_pc/${id}/chunk_${i}`);
+    if (!chunk) {
+      console.log('❌ Missing chunk', i);
+      showToast('❌ Failed to download ' + meta.name);
+      return;
     }
-    return null;
+    allData += chunk.data;
   }
-
-  // Download in parallel batches
-  for (let b = 0; b < totalChunks; b += BATCH_SIZE) {
-    const indices = [];
-    for (let i = b; i < Math.min(b + BATCH_SIZE, totalChunks); i++) indices.push(i);
-    const results = await Promise.all(indices.map(i => fetchChunkWithRetry(i)));
-    for (let j = 0; j < results.length; j++) {
-      if (results[j] === null) {
-        showToast('❌ Failed to download ' + meta.name + ' (chunk ' + (b + j) + ' missing)');
-        return;
-      }
-      chunkArray[b + j] = results[j];
-    }
-    const progress = Math.round((Math.min(b + BATCH_SIZE, totalChunks) / totalChunks) * 100);
-    showToast(`⬇️ Downloading ${meta.name}… ${progress}%`, true);
-  }
-
-  const allData = chunkArray.join('');
 
   // Store file data for later download
   const dataUrl = `data:${meta.mimeType || 'application/octet-stream'};base64,${allData}`;
@@ -513,18 +495,13 @@ async function sendFiles() {
           ts: Date.now()
         });
 
-        // Upload chunks in parallel batches for speed
+        // Upload chunks
         showProgress(file.name, 0);
-        let uploaded = 0;
-        for (let b = 0; b < totalChunks; b += BATCH_SIZE) {
-          const batch = [];
-          for (let i = b; i < Math.min(b + BATCH_SIZE, totalChunks); i++) {
-            const chunk = base64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            batch.push(fbSet(`sessions/${roomCode}/from_phone/${transferId}/chunk_${i}`, { data: chunk }));
-          }
-          await Promise.all(batch);
-          uploaded += batch.length;
-          showProgress(file.name, Math.round((uploaded / totalChunks) * 100));
+        for (let i = 0; i < totalChunks; i++) {
+          const chunk = base64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          await fbSet(`sessions/${roomCode}/from_phone/${transferId}/chunk_${i}`, { data: chunk });
+          const pct = Math.round(((i + 1) / totalChunks) * 100);
+          showProgress(file.name, pct);
         }
 
         // Mark complete using PATCH — keeps chunks intact, only updates status field
@@ -590,24 +567,13 @@ function showResult(type, icon, title, sub) {
   document.getElementById('resultSub').textContent = sub;
   setTimeout(() => { card.style.display = 'none'; }, 4000);
 }
-let _progressToast = null;
-function showToast(msg, isProgress = false) {
-  if (isProgress) {
-    // Reuse same toast for progress updates instead of stacking
-    if (!_progressToast || !_progressToast.isConnected) {
-      _progressToast = document.createElement('div');
-      _progressToast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1b28;border:1px solid #7c6af7;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:#e8eaf2;z-index:999;white-space:nowrap';
-      document.body.appendChild(_progressToast);
-    }
-    _progressToast.textContent = msg;
-    return;
-  }
-  if (_progressToast && _progressToast.isConnected) _progressToast.remove();
+function showToast(msg) {
+  // Simple alert for mobile
   const div = document.createElement('div');
   div.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1b28;border:1px solid #252638;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:#e8eaf2;z-index:999;white-space:nowrap';
   div.textContent = msg;
   document.body.appendChild(div);
-  setTimeout(() => div.remove(), 3000);
+  setTimeout(() => div.remove(), 2500);
 }
 
 // ── Formatters ────────────────────────────
